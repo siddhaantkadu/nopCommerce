@@ -1,5 +1,5 @@
 pipeline {
-    agent { lebal 'DOTNET'}
+    agent { label 'DOTNET'}
     triggers {
         pollSCM('* * * * *')
     }
