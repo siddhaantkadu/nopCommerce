@@ -17,7 +17,7 @@ pipeline {
             }
             post {
                 success {
-                    sh 'mkdir ./published/bin ./published/logs'
+                    sh 'mkdir -p ./published/bin ./published/logs'
                     sh 'tar -czvf nop.web.tar.gz ./published/'
                     archiveArtifacts artifacts: '**/*.tar.gz'
                 }
