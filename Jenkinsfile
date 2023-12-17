@@ -1,5 +1,8 @@
 pipeline {
     agent { label 'DOTNET'}
+    options{
+        skipDefaultCheckout(true)
+    }
     triggers {
         pollSCM('* * * * *')
     }
