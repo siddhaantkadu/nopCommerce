@@ -754,8 +754,7 @@ namespace Nop.Services.Installation
             var crRegistered = await _customerRoleRepository.Table
                 .FirstOrDefaultAsync(customerRole => customerRole.SystemName == NopCustomerDefaults.RegisteredRoleName);
 
-            if (crRegistered == null)
-                throw new ArgumentNullException(nameof(crRegistered));
+            ArgumentNullException.ThrowIfNull(crRegistered);
 
             //default store 
             var defaultStore = await _storeRepository.Table.FirstOrDefaultAsync() ?? throw new Exception("No default store could be loaded");
@@ -2116,8 +2115,7 @@ namespace Nop.Services.Installation
                     Port = 25,
                     Username = "123",
                     Password = "123",
-                    EnableSsl = false,
-                    UseDefaultCredentials = false
+                    EnableSsl = false
                 }
             };
 
@@ -2215,6 +2213,14 @@ namespace Nop.Services.Installation
                     IsActive = true,
                     EmailAccountId = eaGeneral.Id
                 },
+                new()
+                {
+                    Name = MessageTemplateSystemNames.DELETE_CUSTOMER_REQUEST_STORE_OWNER_NOTIFICATION,
+                    Subject = "%Store.Name%. New request to delete customer (GDPR)",
+                    Body = $"%Customer.Email% has requested account deletion. You can consider this in the admin area.",
+                    IsActive = true,
+                    EmailAccountId = eaGeneral.Id
+                },
                 new() {
                     Name = MessageTemplateSystemNames.NEW_RETURN_REQUEST_CUSTOMER_NOTIFICATION,
                     Subject = "%Store.Name%. New return request.",
@@ -2254,6 +2260,13 @@ namespace Nop.Services.Installation
                     Name = MessageTemplateSystemNames.ORDER_CANCELLED_CUSTOMER_NOTIFICATION,
                     Subject = "%Store.Name%. Your order cancelled",
                     Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Hello %Order.CustomerFullName%,{Environment.NewLine}<br />{Environment.NewLine}Your order has been cancelled. Below is the summary of the order.{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Order Number: %Order.OrderNumber%{Environment.NewLine}<br />{Environment.NewLine}Order Details: <a target=\"_blank\" href=\"%Order.OrderURLForCustomer%\">%Order.OrderURLForCustomer%</a>{Environment.NewLine}<br />{Environment.NewLine}Date Ordered: %Order.CreatedOn%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Billing Address{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingFirstName% %Order.BillingLastName%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingAddress1%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingAddress2%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingCity% %Order.BillingZipPostalCode%{Environment.NewLine}<br />{Environment.NewLine}%Order.BillingStateProvince% %Order.BillingCountry%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}%if (%Order.Shippable%) Shipping Address{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingFirstName% %Order.ShippingLastName%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingAddress1%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingAddress2%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingCity% %Order.ShippingZipPostalCode%{Environment.NewLine}<br />{Environment.NewLine}%Order.ShippingStateProvince% %Order.ShippingCountry%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Shipping Method: %Order.ShippingMethod%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine} endif% %Order.Product(s)%{Environment.NewLine}</p>{Environment.NewLine}",
+                    IsActive = true,
+                    EmailAccountId = eaGeneral.Id
+                },
+                new() {
+                    Name = MessageTemplateSystemNames.ORDER_CANCELLED_VENDOR_NOTIFICATION,
+                    Subject = "%Store.Name%. Order #%Order.OrderNumber% cancelled",
+                     Body = $"<p>{Environment.NewLine}<a href=\"%Store.URL%\">%Store.Name%</a>{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Order #%Order.OrderNumber% has been cancelled.{Environment.NewLine}<br />{Environment.NewLine}Customer: %Order.CustomerFullName%,{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}Order Number: %Order.OrderNumber%{Environment.NewLine}<br />{Environment.NewLine}Date Ordered: %Order.CreatedOn%{Environment.NewLine}<br />{Environment.NewLine}<br />{Environment.NewLine}%Order.Product(s)%{Environment.NewLine}</p>{Environment.NewLine}",
                     IsActive = true,
                     EmailAccountId = eaGeneral.Id
                 },
@@ -2696,7 +2709,7 @@ namespace Nop.Services.Installation
                 UseResponseCompression = true,
                 FaviconAndAppIconsHeadCode =
                     "<link rel=\"apple-touch-icon\" sizes=\"180x180\" href=\"/icons/icons_0/apple-touch-icon.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/icons/icons_0/favicon-32x32.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"192x192\" href=\"/icons/icons_0/android-chrome-192x192.png\"><link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/icons/icons_0/favicon-16x16.png\"><link rel=\"manifest\" href=\"/icons/icons_0/site.webmanifest\"><link rel=\"mask-icon\" href=\"/icons/icons_0/safari-pinned-tab.svg\" color=\"#5bbad5\"><link rel=\"shortcut icon\" href=\"/icons/icons_0/favicon.ico\"><meta name=\"msapplication-TileColor\" content=\"#2d89ef\"><meta name=\"msapplication-TileImage\" content=\"/icons/icons_0/mstile-144x144.png\"><meta name=\"msapplication-config\" content=\"/icons/icons_0/browserconfig.xml\"><meta name=\"theme-color\" content=\"#ffffff\">",
-                EnableHtmlMinification = true,
+                EnableHtmlMinification = false,
                 RestartTimeout = NopCommonDefaults.RestartTimeout,
                 HeaderCustomHtml = string.Empty,
                 FooterCustomHtml = string.Empty
@@ -2859,7 +2872,8 @@ namespace Nop.Services.Installation
                 AllowCustomersToSearchWithManufacturerName = false,
                 DisplayAllPicturesOnCatalogPages = false,
                 ProductUrlStructureTypeId = (int)ProductUrlStructureType.Product,
-                ActiveSearchProviderSystemName = string.Empty
+                ActiveSearchProviderSystemName = string.Empty,
+                UseStandardSearchWhenSearchProviderThrowsException = true
             });
 
             await settingService.SaveSettingAsync(new LocalizationSettings
@@ -5740,8 +5754,7 @@ namespace Nop.Services.Installation
                 Published = true,
                 MarkAsNew = true,
                 CreatedOnUtc = DateTime.UtcNow,
-                UpdatedOnUtc = DateTime.UtcNow,
-                HasTierPrices = true
+                UpdatedOnUtc = DateTime.UtcNow
             };
             allProducts.Add(productBeatsPill);
 
@@ -6513,8 +6526,7 @@ namespace Nop.Services.Installation
                 OrderMaximumQuantity = 10000,
                 Published = true,
                 CreatedOnUtc = DateTime.UtcNow,
-                UpdatedOnUtc = DateTime.UtcNow,
-                HasTierPrices = true
+                UpdatedOnUtc = DateTime.UtcNow
             };
 
             allProducts.Add(productOversizedWomenTShirt);
@@ -6641,8 +6653,7 @@ namespace Nop.Services.Installation
                 OrderMaximumQuantity = 10000,
                 Published = true,
                 CreatedOnUtc = DateTime.UtcNow,
-                UpdatedOnUtc = DateTime.UtcNow,
-                HasTierPrices = true
+                UpdatedOnUtc = DateTime.UtcNow
             };
             allProducts.Add(productLeviJeans);
 
